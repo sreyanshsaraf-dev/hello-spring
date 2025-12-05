@@ -17,7 +17,7 @@ public class TodoController {
         this.repo = repo;
     }
 
-    // Create a todo: POST /api/todos    body: {"title":"..."}
+    // Create a todo: POST /api/todos  body: {"title":"..."}
     @PostMapping
     public Todo create(@RequestBody Map<String, String> body) {
         String title = body.getOrDefault("title", "").trim();
@@ -29,13 +29,33 @@ public class TodoController {
         return repo.save(t);
     }
 
-    // List all todos: GET /api/todos
+    // List all: GET /api/todos
     @GetMapping
     public List<Todo> list() {
         return repo.findAll();
     }
 
-    // Mark a todo as done: PATCH /api/todos/{id}/done
+    // Get one: GET /api/todos/{id}
+    @GetMapping("/{id}")
+    public Todo getOne(@PathVariable Long id) {
+        return repo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    // Update title: PUT /api/todos/{id}  body: {"title":"..."}
+    @PutMapping("/{id}")
+    public Todo updateTitle(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        String title = body.getOrDefault("title", "").trim();
+        if (title.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "title is required");
+        }
+        Todo t = repo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        t.setTitle(title);
+        return repo.save(t);
+    }
+
+    // Mark done: PATCH /api/todos/{id}/done
     @PatchMapping("/{id}/done")
     public Todo markDone(@PathVariable Long id) {
         Todo t = repo.findById(id)
@@ -44,7 +64,7 @@ public class TodoController {
         return repo.save(t);
     }
 
-    // Delete a todo: DELETE /api/todos/{id}
+    // Delete: DELETE /api/todos/{id}
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
